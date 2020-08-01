@@ -1,0 +1,367 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <stdlib.h>
+
+
+
+ struct docNode{
+        int docID;
+        int patients_count;
+        struct docNode * left;
+        struct docNode * right;
+    };
+    struct patNode{
+        int patientID;
+        int docID;
+        struct patNode * left;
+        struct patNode * right;
+        struct patNode * parent;
+    };
+
+struct docNode * docroot;
+struct patNode * patroot;
+
+struct docNode* doc_search(int docID){
+    struct docNode* useptr=docroot;
+    struct docNode * temp;
+    temp=NULL;
+    if(useptr==NULL) {temp= NULL;return temp;}
+    while(useptr){
+        if(useptr->docID==docID){temp=useptr; return temp;}
+        else if(useptr->docID>docID){
+            if(useptr->left) {useptr=useptr->left;continue;}
+            else {temp= NULL;return temp;}
+        }
+        else{
+            if(useptr->right){useptr=useptr->right;continue;}
+            else {temp=NULL;return temp;}
+        }
+    }
+   
+    return NULL;
+}
+
+struct patNode*  pat_search(int patientID){
+    struct patNode* useptr=patroot;
+    struct patNode * temp;
+    temp=NULL;
+    if(useptr==NULL) {temp= NULL;return temp;}
+    while(useptr){
+        if(useptr->patientID==patientID){ temp= useptr;return temp;break;}
+        else if(useptr->patientID>patientID){
+            if(useptr->left){useptr=useptr->left;continue;}
+            else { temp=NULL;return temp;break;}
+        }
+        else{
+            if(useptr->right){useptr=useptr->right;continue;}
+            else {temp = NULL;return temp;break;}
+        }
+    }
+    return temp;
+}
+
+
+void insert_doc(int docID){
+    struct docNode * temp=docroot;
+    struct docNode * ptr;
+    ptr= (struct docNode*)malloc(sizeof(struct docNode));
+        ptr->docID = docID;
+        ptr->patients_count=0;
+        ptr->left=NULL;
+        ptr->right=NULL;
+    if(docroot==NULL){docroot=ptr;return;}
+    else{
+        while(temp){
+            if(ptr->docID>temp->docID){
+                if(temp->right){temp=temp->right;continue;}
+                else{temp->right=ptr;break;}
+            }
+            else if (ptr->docID<temp->docID){
+                if(temp->left){temp=temp->left;continue;}
+                else {temp->left=ptr;break;}
+            }
+            else if(ptr->docID==temp->docID) {
+                printf("-1\n");
+                    return;            }
+        }
+    }
+}
+
+void insert_patient(int patientID,int docID,int P){
+    int x;x=0;
+    struct docNode * temp2 = doc_search(docID);
+    if(temp2) x=temp2->patients_count;
+    if(temp2==NULL||x>=P){printf("-1\n");return;}
+    else{
+        struct patNode * patptr = (struct patNode*)malloc(sizeof(struct patNode));
+        patptr->patientID=patientID;
+        patptr->docID=docID;
+        patptr->left=NULL;
+        patptr->right=NULL;
+        patptr->parent = NULL;
+    struct patNode * temp =patroot;
+    if(temp==NULL) { patroot=patptr;temp=patptr;temp2->patients_count++;return;}
+    else{
+        while(temp){
+            if(patientID>temp->patientID){
+                if(temp->right){temp=temp->right;continue;}
+                else{
+                    temp->right=patptr;
+                    patptr->parent=temp;temp2->patients_count++;break;
+                } 
+            }
+            else if (patientID<temp->patientID){
+                if(temp->left){temp=temp->left;continue;}
+                else{
+                    temp->left=patptr;
+                    patptr->parent=temp;
+                    temp2->patients_count++;
+                    break;
+                }
+            }
+            else {
+                printf("-1\n");
+                  return;
+                 }
+          }
+       }
+    }
+}
+
+void delete_patient(int patientID){
+    struct patNode * ptr= pat_search(patientID);
+    if(ptr==NULL){printf("-1\n");return;}
+    int x=ptr->docID;
+    struct docNode * tuy=doc_search(x);
+    tuy->patients_count--;
+     if(ptr==patroot){
+        struct patNode * temp=patroot;
+        if(temp->left==NULL&&temp->right==NULL){
+            patroot=NULL;
+            return;
+        }
+        else if(temp->left){
+            temp=ptr->left;
+            if(temp->right){
+                while(temp->right){
+                    temp=temp->right;
+                }
+                ptr->patientID=temp->patientID;
+                ptr->docID=temp->docID;
+                (temp->parent)->right=temp->left;
+                if(temp->left){
+                (temp->left)->parent=temp->parent;
+                }
+                return;
+            }
+            else {
+                ptr->patientID=temp->patientID;
+                ptr->docID=temp->docID;
+                ptr->left=temp->left;
+                if(temp->left){
+                (temp->left)->parent=ptr;
+                }
+                return;
+            }
+        }
+        else {
+             temp=ptr->right;
+             if(temp->left){
+                while(temp->left){
+                    temp=temp->left;
+                }
+                ptr->patientID=temp->patientID;
+                ptr->docID=temp->docID;
+                (temp->parent)->left=temp->right;
+                 if(temp->right){
+                 (temp->right)->parent=temp->parent;
+                 }
+                 return;
+            }
+            else{
+                ptr->patientID=temp->patientID;
+                ptr->docID=temp->docID;
+                ptr->right=temp->right;
+                if(temp->right){
+                (temp->right)->parent=ptr;
+                }
+                return;
+            }
+        }
+    }
+    else{
+        struct patNode * delptr=ptr->parent;
+        struct patNode * temptr=ptr;
+        if(ptr->left==NULL&&ptr->right==NULL){
+            if(delptr->left == ptr){
+                (ptr->parent)->left = NULL;
+                return;
+            }
+            else{
+                (ptr->parent)->right = NULL;
+                return;
+            }
+        }
+        else if(ptr->left){
+            temptr=ptr->left;
+            if(temptr->right){
+                while(temptr->right){
+                    temptr=temptr->right;
+                }
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                (temptr->parent)->right=temptr->left;
+                if(temptr->left){
+                (temptr->left)->parent=temptr->parent;
+                }
+                return;
+            }
+            else{
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                ptr->left=temptr->left;
+                if(temptr->left){
+                (temptr->left)->parent=ptr;
+                }
+                return;
+            }
+        }
+        else if(ptr->left==NULL&&ptr->right!=NULL){
+            temptr=ptr->right;
+             if(temptr->left){
+                while(temptr->left){
+                    temptr=temptr->left;
+                }
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                (temptr->parent)->left=temptr->right;
+                 if(temptr->right){
+                 (temptr->right)->parent=temptr->parent;
+                 }
+                 return;
+            }
+            else{
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                ptr->right=temptr->right;
+                if(temptr->right){
+                (temptr->right)->parent=ptr;
+                }
+                return;
+            }
+        }
+      /*  else{
+             temptr=ptr->left;
+            if(temptr->right){
+                while(temptr->right){
+                    temptr=temptr->right;
+                }
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                (temptr->parent)->right=temptr->left;
+                if(temptr->left){
+                (temptr->left)->parent=temptr->parent;
+                }
+                return;
+            }
+            else{
+                ptr->patientID=temptr->patientID;
+                ptr->docID=temptr->docID;
+                ptr->left=temptr->left;
+                if(temptr->left){
+                (temptr->left)->parent=ptr;
+                }
+                return;
+            }
+        }*/
+    }
+}
+
+void pat_inorder(struct patNode * patstart,int docI){
+     if(patstart){
+        pat_inorder(patstart->left,docI);
+        if (patstart->docID==docI) printf("%d ",patstart->patientID);
+        pat_inorder(patstart->right,docI);
+    }
+    return;
+}
+
+
+void patients_of_doc(int docID){
+    struct docNode * temp=doc_search(docID);
+    if(temp){
+        pat_inorder(patroot,docID);
+        if(temp->patients_count!=0)printf("\n");
+    }
+    
+}
+
+void find_doc_of_patient(int patientID){
+    struct patNode* ptr1=pat_search(patientID);
+    if(ptr1) printf("%d\n",ptr1->docID);
+    
+}
+
+void doc_preorder(struct docNode * docstart){
+    if(docstart){
+        printf("%d ",docstart->docID);
+        doc_preorder(docstart->left);
+        doc_preorder(docstart->right);
+    }
+   
+}
+
+void pat_preorder(struct patNode * patstart){
+    if(patstart==NULL) return;
+        printf("%d ",patstart->patientID);
+        pat_preorder(patstart->left);
+        pat_preorder(patstart->right);
+  
+}
+
+
+
+int main() {
+    int N,P,k,i,a,b;
+    scanf("%d",&N);
+    scanf("%d",&P);
+    docroot=NULL;
+    patroot = NULL;
+    for(i=0;i<N;i++){
+        scanf("%d",&k);
+        if (k==1){
+            scanf("%d",&a);
+            insert_doc(a);
+        }
+        else if(k==2){
+            scanf("%d",&a);
+            scanf("%d",&b);
+            insert_patient(a,b,P);
+        }
+        else if(k==3){
+            scanf("%d",&a);
+            delete_patient(a);
+        }
+        else if(k==4){
+            scanf("%d",&a); 
+            patients_of_doc(a);
+        }
+        else if(k==5){
+            scanf("%d",&a);
+            find_doc_of_patient(a);
+        }
+        else if(k==6) { 
+            doc_preorder(docroot);
+            if(docroot!=NULL)printf("\n");
+        }
+        
+        else if(k==7) {
+            pat_preorder(patroot);
+            if(patroot!=NULL)printf("\n");
+        }
+    }
+    /* Enter your code here. Read input from STDIN. Print output to STDOUT */    
+   
+    return 0;
+}
